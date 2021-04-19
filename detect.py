@@ -13,6 +13,8 @@ from utils.general import check_img_size, check_requirements, check_imshow, non_
     scale_coords, xyxy2xywh, strip_optimizer, set_logging, increment_path
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized
+from playsound import playsound
+import os
 
 
 def detect(save_img=False):
@@ -99,6 +101,7 @@ def detect(save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    play_sound( names[int(c)] )
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -110,7 +113,8 @@ def detect(save_img=False):
 
                     if save_img or view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                        if names[int(cls)] in ['stairs', 'chair', 'table']:
+                            plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
             # Print time (inference + NMS)
             print(f'{s}Done. ({t2 - t1:.3f}s)')
@@ -144,6 +148,17 @@ def detect(save_img=False):
         print(f"Results saved to {save_dir}{s}")
 
     print(f'Done. ({time.time() - t0:.3f}s)')
+
+
+import threading
+
+def play_in_background(label):
+    playsound(os.path.join('utils', label+".mp3"))
+
+def play_sound(label):
+    if label in ['stairs', 'chair', 'table']:
+        sound_thread = threading.Thread(target=play_in_background, name='sound', args=(label,))
+        sound_thread.start()
 
 
 if __name__ == '__main__':
